@@ -1,0 +1,37 @@
+# Claude
+.claude/
+
+# Temporary
+tmp/
+temp/
+
+
+# Logs
+logs
+*.log
+
+# Coverage
+coverage/
+*.lcov
+
+# dotenv environment variable files
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+.uv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+old-script/
+
+# Local data (LanceDB index, manifests)
+data/

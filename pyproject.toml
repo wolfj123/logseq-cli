@@ -1,0 +1,32 @@
+[project]
+name = "logseq-cli"
+version = "0.1.0"
+description = "A Unix-composable CLI for the Logseq local HTTP API"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Jonathan Wolf" }]
+keywords = ["logseq", "cli", "knowledge-management", "pkm"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Environment :: Console",
+]
+dependencies = ["typer", "httpx", "python-dotenv"]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "anyio[trio]"]
+
+[project.scripts]
+logseq = "src.cli.main:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.setuptools.package-data]
+src = ["data/SKILL.md"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
