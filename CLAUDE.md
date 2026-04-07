@@ -125,6 +125,11 @@ pytest --tb=short
 - Auto-stdin: commands that accept `name`/`uuid` read from piped NDJSON when no arg given
 - `--fields name,uuid` filters output to specific keys (token-efficient for LLMs)
 - `--plain` outputs `key: value` pairs instead of JSON
+- When making a code or release-relevant behavior change, also increment the version in `pyproject.toml`.
+- Use semantic versioning for that bump unless the user asks otherwise:
+  - patch (`0.1.1`) for bug fixes and compatible maintenance work
+  - minor (`0.2.0`) for new backward-compatible features
+  - major (`1.0.0`) for breaking changes
 
 ---
 

@@ -202,6 +202,11 @@ Keep the CLI thin and the service layer explicit.
 - Do not break piping behavior casually.
 - Do not move error text from stderr to stdout.
 - When changing a command contract, update tests in the same task.
+- When making a code or user-facing behavior change, also increment the version in `pyproject.toml`.
+- Follow semantic versioning for version bumps unless the user explicitly asks for a different scheme:
+  - patch (`0.1.1`) for bug fixes, small internal improvements, and compatible docs-only release-worthy corrections
+  - minor (`0.2.0`) for new backward-compatible features
+  - major (`1.0.0`) for breaking changes
 - Prefer targeted edits over broad rewrites.
 - Keep command naming consistent with the existing noun-verb structure.
 
