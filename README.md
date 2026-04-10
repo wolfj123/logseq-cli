@@ -62,7 +62,69 @@ Most Logseq automation requires either the plugin API (which lives inside Logseq
 
 ## Installation
 
-`logseq-cli` is a standard Python package. The examples below are grouped by platform because the Python launcher and virtual environment activation steps differ slightly.
+`logseq-cli` is published on PyPI. Install it globally with `pipx` if you want the `logseq` command available in every shell without manually activating a virtual environment.
+
+Important: the CLI will not work until an API token is configured. Every installation method below must be followed by the required token setup step in [Set the API token](#2-set-the-api-token).
+
+### Global install from PyPI with `pipx`
+
+#### Windows (PowerShell)
+
+```powershell
+py -m pip install --user pipx
+py -m pipx ensurepath
+pipx install logseq-cli
+```
+
+#### macOS / Linux
+
+```bash
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+pipx install logseq-cli
+```
+
+Then run the required token setup step in [Set the API token](#2-set-the-api-token) and verify:
+
+```bash
+logseq --help
+```
+
+### Global install from PyPI with `pip`
+
+#### Windows (PowerShell)
+
+```powershell
+py -m pip install --user logseq-cli
+```
+
+The script usually lands in your user Python `Scripts` directory, such as `%APPDATA%\Python\Python310\Scripts`. Add that directory to `PATH` if `logseq` is not found after install.
+
+#### macOS
+
+```bash
+python3 -m pip install --user logseq-cli
+```
+
+If `logseq` is not found after install, make sure the user base binary directory is on your `PATH`:
+
+```bash
+python3 -m site --user-base
+```
+
+On many systems that means adding a path such as `~/Library/Python/3.11/bin` to your shell profile.
+
+#### Linux
+
+```bash
+python3 -m pip install --user logseq-cli
+```
+
+If `logseq` is not found after install, add `~/.local/bin` to your `PATH`.
+
+### Install from a local checkout
+
+The examples below install from this repository checkout instead of PyPI.
 
 ### Recommended: `pipx` (globally available, no manual activation)
 
@@ -82,7 +144,7 @@ python3 -m pipx ensurepath
 pipx install .
 ```
 
-Open a new shell and verify:
+Then run the required token setup step in [Set the API token](#2-set-the-api-token) and verify:
 
 ```bash
 logseq --help
@@ -106,6 +168,8 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
+Then run the required token setup step in [Set the API token](#2-set-the-api-token) before using `logseq`.
+
 ### User install (no virtual environment)
 
 #### Windows (PowerShell)
@@ -123,6 +187,8 @@ python3 -m pip install --user .
 ```
 
 If `logseq` is not found after install, add `~/.local/bin` to your `PATH`.
+
+Then run the required token setup step in [Set the API token](#2-set-the-api-token) before running `logseq`.
 
 ### Install the agent skill
 
@@ -164,13 +230,39 @@ The server listens at `http://127.0.0.1:12315/api` by default.
 
 ### 2. Set the API token
 
-Copy `.env.example` to `.env` in the project root and fill in your token:
+This step is required for every installation method. `logseq-cli` will not work until a token is stored or provided via `LOGSEQ_TOKEN`.
 
-```env
-LOGSEQ_TOKEN=your-token-here
+Recommended: store the token in the CLI's user config so it works across future shells and agent runs without shell-specific setup.
+
+```bash
+logseq auth set-token
 ```
 
-The CLI loads `.env` automatically on startup. You can also export `LOGSEQ_TOKEN` as a regular shell environment variable instead.
+The command prompts securely for the token and stores it in a user-level config file. After that, verify:
+
+```bash
+logseq auth status
+logseq graph info
+```
+
+#### Multiple tokens or multiple Logseq setups
+
+Store tokens under named profiles and switch between them:
+
+```bash
+logseq auth set-token --profile personal
+logseq auth set-token --profile work
+logseq auth use work
+logseq auth status
+```
+
+You can run `logseq auth set-token` again at any time to replace the token for the active or specified profile.
+
+#### Environment variable override
+
+If you prefer, the CLI still supports `LOGSEQ_TOKEN` and will use it instead of the stored profile token for the current process.
+
+Project-local `.env` files also still work because the CLI loads them on startup.
 
 ---
 
@@ -195,6 +287,14 @@ logseq block append "My Page" "- New thought"
 ---
 
 ## Command Reference
+
+### auth
+
+| Command | Arguments | What It Does |
+|---------|-----------|--------------|
+| `auth set-token [token]` | `--profile`, `--activate/--no-activate` | Store or replace a token in the CLI config; prompts securely if `token` is omitted |
+| `auth use <profile>` | | Switch the active stored profile |
+| `auth status` | | Show the config path, active profile, and stored profile names |
 
 ### page
 

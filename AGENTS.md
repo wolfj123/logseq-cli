@@ -46,8 +46,10 @@ Do not leave disproven HTTP methods documented as supported.
 - The CLI talks to Logseq over HTTP.
 - `LogseqClient` posts JSON requests to `http://127.0.0.1:12315/api` by default.
 - Requests use the shape `{ "method": ..., "args": [...] }`.
-- Auth is a bearer token from `LOGSEQ_TOKEN`.
-- Missing `LOGSEQ_TOKEN` must fail clearly with a non-zero exit.
+- Auth is a bearer token resolved from `LOGSEQ_TOKEN` or the active stored CLI auth profile.
+- The CLI-managed token setup commands live under `logseq auth`.
+- Missing auth configuration must fail clearly with a non-zero exit.
+- In installation and setup docs, treat configuring auth as a required installation step, not optional post-install configuration.
 
 Relevant files:
 
@@ -59,10 +61,19 @@ Relevant files:
 
 Top-level groups registered in `src/cli/main.py`:
 
+- `auth`
 - `page`
 - `block`
 - `graph`
 - `query`
+
+### `auth` commands
+
+Implemented in `src/cli/auth.py`:
+
+- `set-token`
+- `use`
+- `status`
 
 ### `page` commands
 
@@ -202,9 +213,11 @@ Keep the CLI thin and the service layer explicit.
 - Do not break piping behavior casually.
 - Do not move error text from stderr to stdout.
 - When changing a command contract, update tests in the same task.
-- When making a code or user-facing behavior change, also increment the version in `pyproject.toml`.
+- When making a code or user-facing behavior change in `src/` or the packaged CLI, also increment the version in `pyproject.toml`.
+- Do not bump the version for documentation-only, comment-only, or other non-code changes.
+- In docs and examples, do not present any installation flow as complete unless it also includes the required auth setup step.
 - Follow semantic versioning for version bumps unless the user explicitly asks for a different scheme:
-  - patch (`0.1.1`) for bug fixes, small internal improvements, and compatible docs-only release-worthy corrections
+  - patch (`0.1.1`) for bug fixes and small backward-compatible internal improvements
   - minor (`0.2.0`) for new backward-compatible features
   - major (`1.0.0`) for breaking changes
 - Prefer targeted edits over broad rewrites.

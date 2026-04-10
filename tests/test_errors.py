@@ -12,13 +12,13 @@ def runner():
 
 
 def test_missing_token_exits_1_with_clear_message(runner):
-    with patch.dict("os.environ", {}, clear=True):
+    with patch.dict("os.environ", {"LOGSEQ_CLI_CONFIG_DIR": "tmp-test-config"}, clear=True):
         # Ensure LOGSEQ_TOKEN is not set
         import os
         os.environ.pop("LOGSEQ_TOKEN", None)
         result = runner.invoke(app, ["graph", "info"])
     assert result.exit_code == 1
-    assert "LOGSEQ_TOKEN" in result.stderr
+    assert "logseq auth set-token" in result.stderr
 
 
 def test_connect_error_prints_friendly_message(runner):

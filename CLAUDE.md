@@ -12,7 +12,7 @@ A Python CLI that wraps the Logseq local HTTP API, exposing its capabilities as 
 - Language: Python 3.10+
 - CLI framework: `typer`
 - HTTP client: `httpx` (async, wrapped with `asyncio.run` at CLI boundary)
-- Env config: `python-dotenv`
+- Config: `python-dotenv` plus user-level stored auth profiles
 - Test framework: `pytest` + `pytest-asyncio`
 - Logseq HTTP API: local server (default port 12315)
 
@@ -24,8 +24,10 @@ A Python CLI that wraps the Logseq local HTTP API, exposing its capabilities as 
 src/
   logseq_client.py    # HTTP client — thin wrapper around httpx.AsyncClient
   logseq_service.py   # Service layer — async methods over logseq_client
+  config.py           # User config path + stored auth profile management
   cli/
     main.py           # Typer app entry point, get_service(), handle_errors()
+    auth.py           # auth subcommand group
     output.py         # format_output(data, fields, plain) — NDJSON or plain text
     stdin.py          # read_stdin_field(field) — reads NDJSON lines from stdin
     page.py           # page subcommand group
@@ -51,7 +53,7 @@ tests/
 - Logseq must be running with the HTTP API server enabled
 - Default base URL: `http://127.0.0.1:12315/api`
 - Requests are POST with JSON body: `{ "method": "...", "args": [...] }`
-- Token set via `LOGSEQ_TOKEN` env var or `.env` file
+- Token resolved from `LOGSEQ_TOKEN`, a project `.env` file, or the active stored CLI auth profile
 
 ---
 
@@ -71,6 +73,14 @@ pytest --tb=short
 ---
 
 ## CLI Commands
+
+### auth
+
+| Command | Args | Notes |
+|---------|------|-------|
+| `auth set-token [token]` | `--profile`, `--activate/--no-activate` | Stores or replaces a token; prompts securely if `token` is omitted |
+| `auth use <profile>` | | Switches the active stored profile |
+| `auth status` | | Shows config path, active profile, and stored profiles |
 
 ### page
 
@@ -126,6 +136,7 @@ pytest --tb=short
 - `--fields name,uuid` filters output to specific keys (token-efficient for LLMs)
 - `--plain` outputs `key: value` pairs instead of JSON
 - When making a code or release-relevant behavior change, also increment the version in `pyproject.toml`.
+- Do not bump the version for documentation-only, comment-only, or other non-code changes.
 - Use semantic versioning for that bump unless the user asks otherwise:
   - patch (`0.1.1`) for bug fixes and compatible maintenance work
   - minor (`0.2.0`) for new backward-compatible features
