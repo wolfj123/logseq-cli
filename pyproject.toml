@@ -1,19 +1,28 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "logseq-cli"
 version = "0.1.0"
 description = "A Unix-composable CLI for the Logseq local HTTP API"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Jonathan Wolf" }]
 keywords = ["logseq", "cli", "knowledge-management", "pkm"]
 classifiers = [
   "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Environment :: Console",
 ]
 dependencies = ["typer", "httpx", "python-dotenv"]
+
+[project.urls]
+Homepage = "https://github.com/wolf-jonathan/logseq-cli"
+Repository = "https://github.com/wolf-jonathan/logseq-cli"
+Issues = "https://github.com/wolf-jonathan/logseq-cli/issues"
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio", "anyio[trio]"]
@@ -30,3 +39,5 @@ src = ["data/SKILL.md"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+testpaths = ["tests"]
+norecursedirs = ["tmp", "build", "dist", ".venv", "*.egg-info"]

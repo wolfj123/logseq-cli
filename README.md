@@ -17,7 +17,7 @@
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="Python 3.10+"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey" alt="Platform">
-  <a href="https://github.com/jwolf20/logseq-cli/commits/main"><img src="https://img.shields.io/github/last-commit/wolf-jonathan/logseq-cli" alt="Last Commit"></a>
+  <a href="https://github.com/wolf-jonathan/logseq-cli/commits/main"><img src="https://img.shields.io/github/last-commit/wolf-jonathan/logseq-cli" alt="Last Commit"></a>
 
 </p>
 
