@@ -18,6 +18,14 @@ coverage/
 .env
 .env.*
 !.env.example
+!.env.pypi.example
+.env.pypi
+.env.pypi.local
+.env.release
+.env.release.local
+publish-secrets.ps1
+.pypi-token
+.pypi-token.txt
 
 # Python
 __pycache__/
