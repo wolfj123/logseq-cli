@@ -46,7 +46,7 @@ Do not leave disproven HTTP methods documented as supported.
 - The CLI talks to Logseq over HTTP.
 - `LogseqClient` posts JSON requests to `http://127.0.0.1:12315/api` by default.
 - Requests use the shape `{ "method": ..., "args": [...] }`.
-- Auth is a bearer token resolved from `LOGSEQ_TOKEN` or the active stored CLI auth profile.
+- Auth is a bearer token resolved from `LOGSEQ_TOKEN` or the stored CLI auth token.
 - The CLI-managed token setup commands live under `logseq auth`.
 - Missing auth configuration must fail clearly with a non-zero exit.
 - In installation and setup docs, treat configuring auth as a required installation step, not optional post-install configuration.
@@ -72,7 +72,6 @@ Top-level groups registered in `src/cli/main.py`:
 Implemented in `src/cli/auth.py`:
 
 - `set-token`
-- `use`
 - `status`
 
 ### `page` commands

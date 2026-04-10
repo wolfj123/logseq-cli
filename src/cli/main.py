@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 from src.logseq_client import LogseqClient
 from src.logseq_service import LogseqService
-from src.config import get_active_profile_token
+from src.config import get_token
 from src.cli import auth as auth_module
 from src.cli import page as page_module
 from src.cli import block as block_module
@@ -33,24 +33,15 @@ app.add_typer(skill_module.app, name="skill")
 def get_service() -> LogseqService:
     token = os.environ.get("LOGSEQ_TOKEN")
     if not token:
-        profile, token = get_active_profile_token()
+        token = get_token()
         if not token:
             typer.echo("Error: no Logseq API token is configured.", err=True)
             typer.echo("", err=True)
             typer.echo("Set one with:", err=True)
             typer.echo("  logseq auth set-token", err=True)
             typer.echo("", err=True)
-            typer.echo("Or set a specific stored profile with:", err=True)
-            typer.echo("  logseq auth set-token --profile work", err=True)
-            typer.echo("  logseq auth use work", err=True)
-            typer.echo("", err=True)
             typer.echo("Environment variable override is still supported:", err=True)
             typer.echo("  LOGSEQ_TOKEN=your-token-here", err=True)
-            typer.echo("", err=True)
-            typer.echo(
-                f"Current stored profile: {profile}",
-                err=True,
-            )
             raise typer.Exit(1)
     return LogseqService(LogseqClient(token=token))
 

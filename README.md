@@ -245,18 +245,7 @@ logseq auth status
 logseq graph info
 ```
 
-#### Multiple tokens or multiple Logseq setups
-
-Store tokens under named profiles and switch between them:
-
-```bash
-logseq auth set-token --profile personal
-logseq auth set-token --profile work
-logseq auth use work
-logseq auth status
-```
-
-You can run `logseq auth set-token` again at any time to replace the token for the active or specified profile.
+Run `logseq auth set-token` again at any time to replace the stored token with a new one.
 
 #### Environment variable override
 
@@ -292,9 +281,8 @@ logseq block append "My Page" "- New thought"
 
 | Command | Arguments | What It Does |
 |---------|-----------|--------------|
-| `auth set-token [token]` | `--profile`, `--activate/--no-activate` | Store or replace a token in the CLI config; prompts securely if `token` is omitted |
-| `auth use <profile>` | | Switch the active stored profile |
-| `auth status` | | Show the config path, active profile, and stored profile names |
+| `auth set-token [token]` | | Store or replace the token in the CLI config; prompts securely if `token` is omitted |
+| `auth status` | | Show the config path and whether a token is stored |
 
 ### page
 
