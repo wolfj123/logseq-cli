@@ -249,9 +249,7 @@ Run `logseq auth set-token` again at any time to replace the stored token with a
 
 #### Environment variable override
 
-If you prefer, the CLI still supports `LOGSEQ_TOKEN` and will use it instead of the stored profile token for the current process.
-
-Project-local `.env` files also still work because the CLI loads them on startup.
+If you prefer, the CLI still supports `LOGSEQ_TOKEN` and will use it instead of the stored token for the current process.
 
 ---
 

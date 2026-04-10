@@ -12,7 +12,7 @@ A Python CLI that wraps the Logseq local HTTP API, exposing its capabilities as 
 - Language: Python 3.10+
 - CLI framework: `typer`
 - HTTP client: `httpx` (async, wrapped with `asyncio.run` at CLI boundary)
-- Config: `python-dotenv` plus a user-level stored auth token
+- Config: user-level stored auth token
 - Test framework: `pytest` + `pytest-asyncio`
 - Logseq HTTP API: local server (default port 12315)
 
@@ -53,7 +53,7 @@ tests/
 - Logseq must be running with the HTTP API server enabled
 - Default base URL: `http://127.0.0.1:12315/api`
 - Requests are POST with JSON body: `{ "method": "...", "args": [...] }`
-- Token resolved from `LOGSEQ_TOKEN`, a project `.env` file, or the stored CLI auth token
+- Token resolved from `LOGSEQ_TOKEN` or the stored CLI auth token
 
 ---
 

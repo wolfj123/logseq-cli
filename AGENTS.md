@@ -38,7 +38,6 @@ Do not leave disproven HTTP methods documented as supported.
 - Python package with entry point `logseq = "src.cli.main:app"`
 - CLI framework: `typer`
 - HTTP client: `httpx.AsyncClient`
-- Env loading: `python-dotenv`
 - Test stack: `pytest`, `pytest-asyncio`, `typer.testing`
 
 ## Runtime Model
