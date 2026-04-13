@@ -1,16 +1,25 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 from .logseq_client import LogseqClient
 
 
 class LogseqPage(TypedDict):
     originalName: str
-    uuid: str
-    properties: dict
-    journal: bool  # "journal?" key
+    uuid: NotRequired[str]
+    properties: NotRequired[dict]
+    journal: NotRequired[bool]  # "journal?" key
+
+
+def normalize_page(page: dict) -> dict:
+    return {
+        "name": page["originalName"],
+        "uuid": page.get("uuid"),
+        "properties": page.get("properties"),
+        "isJournal": page.get("journal?"),
+    }
 
 
 class LogseqService:
@@ -19,15 +28,7 @@ class LogseqService:
 
     async def get_all_pages(self, page_number: int = 1, page_size: int = 50) -> dict:
         pages: list = await self._client.call_logseq_api("logseq.Editor.getAllPages", [])
-        filtered = [
-            {
-                "name": p["originalName"],
-                "uuid": p["uuid"],
-                "properties": p.get("properties"),
-                "isJournal": p.get("journal?"),
-            }
-            for p in pages
-        ]
+        filtered = [normalize_page(p) for p in pages]
         start = (page_number - 1) * page_size
         return {"pages": filtered[start : start + page_size], "total": len(pages)}
 

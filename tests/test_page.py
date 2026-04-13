@@ -33,6 +33,20 @@ def test_page_list_returns_ndjson(runner, mock_service):
     assert json.loads(lines[1])["name"] == "Page B"
 
 
+def test_page_list_handles_pages_without_uuid(runner, mock_service):
+    mock_service.get_all_pages_raw.return_value = [
+        {"originalName": "Page A", "journal?": False, "properties": {}},
+    ]
+    result = runner.invoke(app, ["page", "list"])
+    assert result.exit_code == 0
+    assert json.loads(result.stdout.strip()) == {
+        "name": "Page A",
+        "uuid": None,
+        "properties": {},
+        "isJournal": False,
+    }
+
+
 def test_page_list_fields_option(runner, mock_service):
     mock_service.get_all_pages_raw.return_value = [
         {"originalName": "Page A", "uuid": "1", "journal?": False, "properties": {}},

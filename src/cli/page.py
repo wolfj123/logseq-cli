@@ -8,6 +8,7 @@ import typer
 
 from src.cli.output import format_output
 from src.cli.stdin import read_stdin_field
+from src.logseq_service import normalize_page
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -42,15 +43,7 @@ def page_list(
         pages = result["pages"]
     else:
         raw = _run(svc.get_all_pages_raw())
-        pages = [
-            {
-                "name": p["originalName"],
-                "uuid": p["uuid"],
-                "properties": p.get("properties"),
-                "isJournal": p.get("journal?"),
-            }
-            for p in raw
-        ]
+        pages = [normalize_page(p) for p in raw]
     field_list = [f.strip() for f in fields.split(",")] if fields else None
     typer.echo(format_output(pages, fields=field_list, plain=plain), nl=False)
 
