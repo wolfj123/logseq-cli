@@ -26,7 +26,7 @@
 <p align="center"><em>Pipe pages. Filter blocks. Query the graph. Work with Logseq the Unix way.</em></p>
 
 <p align="center">
-A Unix-composable CLI for the <a href="https://logseq.com">Logseq</a> local HTTP API — built for humans and AI agents alike. NDJSON output, clean stderr, and auto-stdin composition let you wire Logseq into any shell pipeline or agentic workflow without glue code.
+A Unix-composable CLI for the <a href="https://logseq.com">Logseq</a> local HTTP API - built for humans and AI agents alike. NDJSON output, clean stderr, and auto-stdin composition let you wire Logseq into any shell pipeline or agentic workflow without glue code.
 </p>
 
 <p align="center">
@@ -43,12 +43,12 @@ Most Logseq automation requires either the plugin API (which lives inside Logseq
 
 | Property | What You Get |
 |----------|-------------|
-| **NDJSON by default** | Pipe directly into `jq`, `fzf`, or the next command — no parsing glue |
+| **NDJSON by default** | Pipe directly into `jq`, `fzf`, or the next command - no parsing glue |
 | **Auto-stdin** | Commands read identifiers from upstream NDJSON when no argument is given |
-| **`--fields` filtering** | Trim output to specific keys — token-efficient for LLM agents |
+| **`--fields` filtering** | Trim output to specific keys - token-efficient for LLM agents |
 | **`--plain` mode** | Human-readable `key: value` pairs for interactive use |
-| **Errors on stderr** | stdout is always clean — safe to pipe at every step |
-| **Consistent structure** | Every command follows `noun verb` — no surprises |
+| **Errors on stderr** | stdout is always clean - safe to pipe at every step |
+| **Consistent structure** | Every command follows `noun verb` - no surprises |
 
 ---
 
@@ -348,8 +348,8 @@ logseq query run "[:find ?name :where [?p :block/name ?name]]" | jq .
 
 | Mode | What You Get |
 |------|-------------|
-| **Default (NDJSON)** | One JSON object per line — pipe-safe, `jq`-compatible |
-| **`--plain`** | `key: value` pairs — human-readable for interactive use |
+| **Default (NDJSON)** | One JSON object per line - pipe-safe, `jq`-compatible |
+| **`--plain`** | `key: value` pairs - human-readable for interactive use |
 | **`--fields name,uuid`** | Output filtered to the specified keys only |
 
 Errors always go to **stderr**. stdout is reserved for data only.
@@ -445,12 +445,12 @@ logseq skill uninstall
 
 ```
 src/
-  logseq_client.py      # HTTP client — thin wrapper around httpx.AsyncClient
-  logseq_service.py     # Service layer — async methods over logseq_client
+  logseq_client.py      # HTTP client - thin wrapper around httpx.AsyncClient
+  logseq_service.py     # Service layer - async methods over logseq_client
   cli/
     main.py             # Typer app entry point, get_service(), handle_errors()
     output.py           # format_output(data, fields, plain)
-    stdin.py            # read_stdin_field(field) — reads NDJSON lines from stdin
+    stdin.py            # read_stdin_field(field) - reads NDJSON lines from stdin
     page.py             # page subcommand group
     block.py            # block subcommand group
     graph.py            # graph subcommand group
