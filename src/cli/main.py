@@ -61,7 +61,7 @@ def get_service() -> LogseqService:
             typer.echo("  logseq auth set-token", err=True)
             typer.echo("", err=True)
             typer.echo("Environment variable override is still supported:", err=True)
-            typer.echo("  LOGSEQ_TOKEN=***", err=True)
+            typer.echo("  LOGSEQ_TOKEN=your-token-here", err=True)
             raise typer.Exit(1)
     host = os.environ.get("LOGSEQ_HOST") or get_host()
     port_str = os.environ.get("LOGSEQ_PORT")
