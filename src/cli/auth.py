@@ -54,7 +54,7 @@ def auth_set_token(
 def auth_set_server(
     server: Annotated[
         str,
-        typer.Argument(help="Logseq HTTP server address in 'host:port' format (default: 127.0.0.1:12315).", callback=_validate_server),
+        typer.Argument(help="Logseq HTTP server address in 'host' or 'host:port' format (default: 127.0.0.1:12315). Port is optional, omitted uses 12315.", callback=_validate_server),
     ],
 ) -> None:
     host, port = _parse_server(server)

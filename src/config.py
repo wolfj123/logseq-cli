@@ -8,34 +8,44 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_SERVER = "127.0.0.1:12315"
+DEFAULT_PORT = 12315
 
 
 def _parse_server(server: str) -> tuple[str, int]:
-    """Parse 'host:port' string into (host, port). Raises ValueError on invalid input."""
+    """Parse 'host' or 'host:port' string into (host, port).
+
+    If port is omitted, DEFAULT_PORT (12315) is used.
+    Raises ValueError on invalid input.
+    """
     if not server or not server.strip():
-        raise ValueError("Server cannot be empty. Expected format: 'host:port'")
+        raise ValueError("Server cannot be empty. Expected format: 'host' or 'host:port'")
 
-    # Split on last colon to support IPv6 like [::1]:12315
+    server = server.strip()
+
+    # No colon: bare hostname, use default port
     if ":" not in server:
-        raise ValueError(f"Invalid server '{server}': expected format 'host:port'")
+        host = server
+        port = DEFAULT_PORT
+    else:
+        last_colon = server.rfind(":")
+        host = server[:last_colon].strip()
+        port_str = server[last_colon + 1:].strip()
 
-    last_colon = server.rfind(":")
-    host = server[:last_colon].strip()
-    port_str = server[last_colon + 1:].strip()
+        if not port_str:
+            # e.g. '127.0.0.1:' → use default port
+            port = DEFAULT_PORT
+        else:
+            try:
+                port = int(port_str)
+            except ValueError:
+                raise ValueError(f"Invalid server '{server}': port '{port_str}' is not a valid integer")
+            if port < 1 or port > 65535:
+                raise ValueError(f"Invalid server '{server}': port must be between 1 and 65535, got {port}")
 
     if not host:
         raise ValueError(f"Invalid server '{server}': host cannot be empty")
     if re.search(r"[\s\x00-\x1f]", host):
         raise ValueError(f"Invalid host '{host}': must not contain spaces or control characters")
-    if not port_str:
-        raise ValueError(f"Invalid server '{server}': port cannot be empty")
-
-    try:
-        port = int(port_str)
-    except ValueError:
-        raise ValueError(f"Invalid server '{server}': port '{port_str}' is not a valid integer")
-    if port < 1 or port > 65535:
-        raise ValueError(f"Invalid server '{server}': port must be between 1 and 65535, got {port}")
 
     return host, port
 

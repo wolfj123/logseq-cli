@@ -63,17 +63,20 @@ def test_missing_required_arg_exits_nonzero(runner):
 
 # ---- LOGSEQ_SERVER env var tests ----
 
-def test_env_server_invalid_format_exits_1_with_friendly_message(runner):
-    with patch.dict("os.environ", {"LOGSEQ_CLI_CONFIG_DIR": "tmp-test-config", "LOGSEQ_TOKEN": "test-token", "LOGSEQ_SERVER": "abc"}, clear=True):
-        import os
-        os.environ["LOGSEQ_TOKEN"] = "test-token"
-        os.environ["LOGSEQ_SERVER"] = "abc"
+def test_env_server_bare_hostname_works(runner, monkeypatch, tmp_path):
+    """Bare hostname without port uses default port 12315."""
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setenv("LOGSEQ_TOKEN", "test-token")
+    monkeypatch.setenv("LOGSEQ_SERVER", "127.0.0.1")
+    from unittest.mock import patch
+    with patch("src.cli.main._check_connectivity") as mock_check:
         result = runner.invoke(app, ["graph", "info"])
-    assert result.exit_code == 1
-    assert "expected format" in result.stderr
+    # Called with default port since no port specified
+    mock_check.assert_called_once_with("127.0.0.1", 12315)
 
 
-def test_env_server_invalid_port_exits_1_with_friendly_message(runner):
+def test_env_server_non_integer_port_exits_1_with_friendly_message(runner):
+    """LOGSEQ_SERVER with non-integer port is rejected."""
     with patch.dict("os.environ", {"LOGSEQ_CLI_CONFIG_DIR": "tmp-test-config", "LOGSEQ_TOKEN": "test-token", "LOGSEQ_SERVER": "127.0.0.1:abc"}, clear=True):
         import os
         os.environ["LOGSEQ_TOKEN"] = "test-token"

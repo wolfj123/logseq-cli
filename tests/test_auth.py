@@ -108,12 +108,16 @@ def test_auth_set_server_rejects_empty(monkeypatch, tmp_path):
     assert "cannot be empty" in result.output
 
 
-def test_auth_set_server_rejects_no_colon(monkeypatch, tmp_path):
+def test_auth_set_server_accepts_bare_hostname_no_port(monkeypatch, tmp_path):
+    """Bare hostname without port is valid (uses default port 12315)."""
     monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
     from src.cli.main import app
-    result = runner().invoke(app, ["auth", "set-server", "127.0.0.1"])
-    assert result.exit_code == 2
-    assert "expected format" in result.output
+    from typer.testing import CliRunner
+    from unittest.mock import patch
+    with patch("src.cli.auth._check_connectivity", return_value=True):
+        result = CliRunner().invoke(app, ["auth", "set-server", "127.0.0.1"])
+    assert result.exit_code == 0
+    assert "Stored Logseq server: 127.0.0.1" in result.stdout
 
 
 def test_auth_set_server_rejects_port_zero(monkeypatch, tmp_path):
@@ -179,7 +183,7 @@ def test_config_set_server_rejects_invalid(monkeypatch, tmp_path):
     monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
     from src.config import set_server
     import pytest
-    for val in ["", "noport", "127.0.0.1:0", "127.0.0.1:65536", "127.0.0.1:abc", ":12315"]:
+    for val in ["", "127.0.0.1:0", "127.0.0.1:65536", "127.0.0.1:abc", "my host:12315"]:
         with pytest.raises(ValueError):
             set_server(val)
 
@@ -228,10 +232,10 @@ def test_config_resolve_server_env_overrides_config(monkeypatch, tmp_path):
 
 def test_config_resolve_server_env_invalid(monkeypatch, tmp_path):
     monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
-    monkeypatch.setenv("LOGSEQ_SERVER", "abc")
+    monkeypatch.setenv("LOGSEQ_SERVER", "127.0.0.1:abc")
     from src.config import resolve_server
     import pytest
-    with pytest.raises(ValueError, match="expected format"):
+    with pytest.raises(ValueError, match="not a valid integer"):
         resolve_server()
 
 
@@ -279,3 +283,82 @@ def test_auth_set_server_saves_immediately_when_connected(monkeypatch, tmp_path)
     import json
     config = json.loads((tmp_path / "config.json").read_text(encoding="utf-8"))
     assert config["server"] == "127.0.0.1:12315"
+
+
+# ---- optional port tests ----
+
+def test_parse_server_bare_hostname_uses_default_port(monkeypatch, tmp_path):
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    from src.config import _parse_server
+    host, port = _parse_server("10.191.64.81")
+    assert host == "10.191.64.81"
+    assert port == 12315
+
+
+def test_parse_server_hostname_only_uses_default_port(monkeypatch, tmp_path):
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    from src.config import _parse_server
+    host, port = _parse_server("localhost")
+    assert host == "localhost"
+    assert port == 12315
+
+
+def test_parse_server_trailing_colon_uses_default_port(monkeypatch, tmp_path):
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    from src.config import _parse_server
+    host, port = _parse_server("10.191.64.81:")
+    assert host == "10.191.64.81"
+    assert port == 12315
+
+
+def test_parse_server_explicit_port_overrides_default(monkeypatch, tmp_path):
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    from src.config import _parse_server
+    host, port = _parse_server("10.191.64.81:80")
+    assert host == "10.191.64.81"
+    assert port == 80
+
+
+def test_auth_set_server_accepts_bare_hostname(monkeypatch, tmp_path):
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    from src.cli.main import app
+    from typer.testing import CliRunner
+    from unittest.mock import patch
+
+    with patch("src.cli.auth._check_connectivity", return_value=True):
+        result = CliRunner().invoke(app, ["auth", "set-server", "10.191.64.81"])
+
+    assert result.exit_code == 0
+    assert "Stored Logseq server: 10.191.64.81" in result.stdout
+    import json
+    config = json.loads((tmp_path / "config.json").read_text(encoding="utf-8"))
+    assert config["server"] == "10.191.64.81"
+
+
+def test_auth_set_server_accepts_trailing_colon(monkeypatch, tmp_path):
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    from src.cli.main import app
+    from typer.testing import CliRunner
+    from unittest.mock import patch
+
+    with patch("src.cli.auth._check_connectivity", return_value=True):
+        result = CliRunner().invoke(app, ["auth", "set-server", "10.191.64.81:"])
+
+    assert result.exit_code == 0
+    assert "Stored Logseq server: 10.191.64.81:" in result.stdout
+
+
+def test_config_get_server_defaults_still_returns_host_port(monkeypatch, tmp_path):
+    """get_server() returns DEFAULT_SERVER format (host:port) when no config exists."""
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    from src.config import get_server
+    assert get_server() == "127.0.0.1:12315"
+
+
+def test_config_resolve_server_bare_hostname_env(monkeypatch, tmp_path):
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setenv("LOGSEQ_SERVER", "10.0.0.1")
+    from src.config import resolve_server
+    host, port = resolve_server()
+    assert host == "10.0.0.1"
+    assert port == 12315
