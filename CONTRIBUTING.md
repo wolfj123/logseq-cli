@@ -49,6 +49,22 @@ py -3.10 -m venv .venv
 pip install -e ".[dev]"
 ```
 
+Windows PowerShell full setup:
+
+```powershell
+py -3.10 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
+```
+
+macOS / Linux full setup:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
+
 ### 4. Configure the API token
 
 Copy the example env file and fill in your Logseq API token:
@@ -62,6 +78,41 @@ Verify the connection:
 
 ```bash
 logseq graph info
+```
+
+### 5. Uninstall a local dev build
+
+If you installed the project as an editable package in a virtual environment,
+uninstall it from that environment and then remove the environment directory.
+
+Windows (PowerShell):
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+pip uninstall logseq-cli
+deactivate
+Remove-Item -Recurse -Force .venv
+```
+
+macOS / Linux:
+
+```bash
+source .venv/bin/activate
+pip uninstall logseq-cli
+deactivate
+rm -rf .venv
+```
+
+If you installed a local checkout with a user install instead:
+
+```powershell
+# Windows (PowerShell)
+py -m pip uninstall logseq-cli
+```
+
+```bash
+# macOS / Linux
+python3 -m pip uninstall logseq-cli
 ```
 
 ---
