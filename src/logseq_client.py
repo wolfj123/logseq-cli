@@ -7,7 +7,7 @@ class LogseqClient:
         token: str,
         base_url: str,
     ) -> None:
-        self._base_url = base_url.rstrip("/")
+        self._base_url = base_url.strip()
         self._headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {token}",

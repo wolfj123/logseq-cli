@@ -7,7 +7,9 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse, urlunparse
 
+DEFAULT_PATH = "/api"
 LEGACY_DEFAULT_PORT = 12315
+DEFAULT_SERVER = f"http://127.0.0.1:{LEGACY_DEFAULT_PORT}{DEFAULT_PATH}"
 SCHEME_PORT_DEFAULTS = {"http": 80, "https": 443}
 
 

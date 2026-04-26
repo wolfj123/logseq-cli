@@ -5,11 +5,10 @@ from typing import Annotated, Optional
 import httpx
 import typer
 
-from src.config import get_config_path, get_token, set_token, get_server, set_server, _validate_server as _validate_server_url, _normalize_server_url
+from src.config import get_config_path, get_token, set_token, get_server, set_server, \
+    _validate_server as _validate_server_url, _normalize_server_url, DEFAULT_SERVER, DEFAULT_PATH
 
 app = typer.Typer(no_args_is_help=True, help="Manage Logseq API connection settings.")
-
-DEFAULT_SERVER = "http://127.0.0.1:12315"
 
 
 def _validate_server(value: str) -> str:
@@ -36,7 +35,7 @@ def _check_connectivity(url: str) -> bool:
     """Check connectivity to Logseq server. Returns True if reachable."""
     try:
         with httpx.Client(base_url=url, timeout=3) as client:
-            response = client.get("/api")
+            response = client.get(DEFAULT_PATH)
             return response.status_code in (200, 400, 401, 403, 405)
     except (httpx.ConnectError, httpx.ReadTimeout):
         return False
@@ -47,7 +46,7 @@ def _get_current_graph(base_url: str, token: str) -> dict | None:
     try:
         with httpx.Client(base_url=base_url, timeout=5) as client:
             resp = client.post(
-                "/api",
+                DEFAULT_PATH,
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {token}",
@@ -80,7 +79,7 @@ def auth_set_token(
 def auth_set_server(
     server: Annotated[
         str,
-        typer.Argument(help="Logseq HTTP server URL (default: http://127.0.0.1:12315). Examples: http://10.0.0.1:12315, https://example.com", callback=_validate_server),
+        typer.Argument(help=f"Logseq HTTP server URL (default: {DEFAULT_SERVER}). Examples: http://10.0.0.1:12315/api, https://example.com/api", callback=_validate_server),
     ],
 ) -> None:
     # Normalize to full URL

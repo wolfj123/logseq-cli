@@ -14,13 +14,12 @@ from src.cli import graph as graph_module
 from src.cli import page as page_module
 from src.cli import query as query_module
 from src.cli import skill as skill_module
-from src.config import get_token, resolve_server
+from src.config import get_token, resolve_server, DEFAULT_SERVER
 from src.logseq_client import LogseqClient
 from src.logseq_service import LogseqService
 
 load_dotenv()
 
-DEFAULT_SERVER = "http://127.0.0.1:12315"
 
 
 def configure_windows_stdio_utf8() -> None:
