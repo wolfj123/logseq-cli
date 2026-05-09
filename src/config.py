@@ -73,7 +73,12 @@ def _normalize_server_url(server: str) -> str:
     else:
         netloc = f"{parsed.hostname}:{port}"
 
-    return urlunparse(parsed._replace(netloc=netloc))
+    # Determine default API path
+    path = parsed.path or ""
+    if not path:
+        path = DEFAULT_PATH
+
+    return urlunparse(parsed._replace(netloc=netloc, path=path))
 
 
 def get_config_dir() -> Path:
@@ -123,10 +128,12 @@ def save_config(config: dict[str, Any]) -> Path:
     return path
 
 
-def set_token(token: str) -> Path:
+def set_token(token: str) -> str:
+    token = token.strip()
     config = load_config()
     config["token"] = token
-    return save_config(config)
+    save_config(config)
+    return token
 
 
 def get_token() -> str | None:
@@ -134,15 +141,17 @@ def get_token() -> str | None:
     return token if isinstance(token, str) and token else None
 
 
-def set_server(server: str) -> Path:
+def set_server(server: str) -> str:
     _validate_server(server)
+    normalized = _normalize_server_url(server)
     config = load_config()
-    config["server"] = server
-    return save_config(config)
+    config["server"] = normalized
+    save_config(config)
+    return normalized
 
 
-def get_server() -> str | None:
-    """Get server from config. Returns None if not configured."""
+def load_config_file_server() -> str | None:
+    """Load server from config file. Returns None if not configured."""
     config = load_config()
     server = config.get("server")
     if isinstance(server, str) and server:
@@ -150,28 +159,25 @@ def get_server() -> str | None:
     return None
 
 
-def resolve_server(default: str) -> str:
-    """Resolve the current server to a full URL string, applying env var override.
+def resolve_server(default: str = DEFAULT_SERVER) -> str:
+    """Resolve the current server to a full URL string.
 
-    Args:
-        default: Default server URL to use when no config or env var is set.
+    Priority: LOGSEQ_SERVER env var > config file > default.
 
-    Returns:
-        Normalized full URL string.
-
-    Raises:
-        ValueError: If the server string is invalid.
+    Env var values are normalized at resolution time. Config file values are
+    trusted as-is (they are normalized at write time by `set_server`).
     """
     env_server = os.environ.get("LOGSEQ_SERVER")
-    server_str = env_server if env_server else get_server()
 
-    if not server_str:
-        server_str = default
+    if env_server:
+        server_str = env_server.strip()
+        try:
+            return _normalize_server_url(server_str)
+        except ValueError as e:
+            raise ValueError(f"Invalid server from LOGSEQ_SERVER '{server_str}': {e}")
 
-    server_str = server_str.strip()
+    server_str = load_config_file_server()
+    if server_str:
+        return server_str.strip()
 
-    try:
-        return _normalize_server_url(server_str)
-    except ValueError as e:
-        source = "LOGSEQ_SERVER" if env_server else "config"
-        raise ValueError(f"Invalid server from {source} '{server_str}': {e}")
+    return default

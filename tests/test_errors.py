@@ -71,7 +71,7 @@ def test_env_server_bare_hostname_works(runner, monkeypatch, tmp_path):
     from unittest.mock import patch
     with patch("src.cli.main._check_connectivity") as mock_check:
         result = runner.invoke(app, ["graph", "info"])
-    mock_check.assert_called_once_with("http://127.0.0.1:12315")
+    mock_check.assert_called_once_with("http://127.0.0.1:12315/api")
 
 
 def test_env_server_full_url_works(runner, monkeypatch, tmp_path):
@@ -82,7 +82,7 @@ def test_env_server_full_url_works(runner, monkeypatch, tmp_path):
     from unittest.mock import patch
     with patch("src.cli.main._check_connectivity") as mock_check:
         result = runner.invoke(app, ["graph", "info"])
-    mock_check.assert_called_once_with("http://10.0.0.1:8080")
+    mock_check.assert_called_once_with("http://10.0.0.1:8080/api")
 
 
 def test_env_server_non_integer_port_exits_1_with_friendly_message(runner):

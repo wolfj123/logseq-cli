@@ -53,7 +53,7 @@ def _check_connectivity(url: str) -> bool:
     """Pre-flight connectivity check. Returns True if reachable, False otherwise."""
     try:
         with httpx.Client(base_url=url, timeout=3) as sync_client:
-            response = sync_client.get("/api")
+            response = sync_client.get("/")
             if response.status_code not in (200, 400, 401, 403, 405):
                 typer.echo(
                     f"Error: Logseq responded with unexpected status {response.status_code} "

@@ -5,8 +5,8 @@ from typing import Annotated, Optional
 import httpx
 import typer
 
-from src.config import get_config_path, get_token, set_token, get_server, set_server, \
-    _validate_server as _validate_server_url, _normalize_server_url, DEFAULT_SERVER, DEFAULT_PATH
+from src.config import get_config_path, get_token, set_token, load_config_file_server, set_server, \
+    _validate_server as _validate_server_url, _normalize_server_url, DEFAULT_SERVER
 
 app = typer.Typer(no_args_is_help=True, help="Manage Logseq API connection settings.")
 
@@ -35,7 +35,7 @@ def _check_connectivity(url: str) -> bool:
     """Check connectivity to Logseq server. Returns True if reachable."""
     try:
         with httpx.Client(base_url=url, timeout=3) as client:
-            response = client.get(DEFAULT_PATH)
+            response = client.get("/")
             return response.status_code in (200, 400, 401, 403, 405)
     except (httpx.ConnectError, httpx.ReadTimeout):
         return False
@@ -46,7 +46,7 @@ def _get_current_graph(base_url: str, token: str) -> dict | None:
     try:
         with httpx.Client(base_url=base_url, timeout=5) as client:
             resp = client.post(
-                DEFAULT_PATH,
+                "/",
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {token}",
@@ -70,9 +70,9 @@ def auth_set_token(
     ] = None,
 ) -> None:
     value = (token or typer.prompt("Logseq API token", hide_input=True)).strip()
-    path = set_token(value)
+    set_token(value)
     typer.echo("Stored Logseq API token")
-    typer.echo(f"Config path: {path}")
+    typer.echo(f"Config path: {get_config_path()}")
 
 
 @app.command("set-server")
@@ -97,9 +97,9 @@ def auth_set_server(
             typer.echo("Server address not saved.")
             raise typer.Exit(0)
 
-    path = set_server(server)
-    typer.echo(f"Stored Logseq server: {server}")
-    typer.echo(f"Config path: {path}")
+    normalized_url = set_server(base_url)
+    typer.echo(f"Stored Logseq server: {normalized_url}")
+    typer.echo(f"Config path: {get_config_path()}")
 
     if not connected:
         typer.echo("Connection: not verified (Logseq not reachable at time of saving)")
@@ -109,7 +109,7 @@ def auth_set_server(
 
     # Get current graph info
     token = get_token()
-    graph = _get_current_graph(base_url, token) if token else None
+    graph = _get_current_graph(normalized_url, token) if token else None
 
     if graph:
         typer.echo("")
@@ -126,7 +126,7 @@ def auth_set_server(
 @app.command("status")
 def auth_status() -> None:
     token = get_token()
-    server = get_server() or DEFAULT_SERVER
+    server = load_config_file_server() or DEFAULT_SERVER
     typer.echo(f"Config path: {get_config_path()}")
     typer.echo(f"Stored token: {_mask_token(token)}")
     typer.echo(f"Server: {server}")
