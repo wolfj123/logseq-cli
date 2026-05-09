@@ -197,22 +197,22 @@ def test_config_set_server_cleans_legacy_keys(monkeypatch, tmp_path):
     assert config["token"] == "tok"
 
 
-def test_config_get_server_backward_compat(monkeypatch, tmp_path):
-    """load_config_file_server() returns None for legacy host/port keys - CLI handles default."""
+def test_config_load_file_server_defaults(monkeypatch, tmp_path):
+    """load_config_file_server() returns None when no config exists."""
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    from src.config import load_config_file_server
+    assert load_config_file_server() is None
+
+
+def test_config_load_file_server_backward_compat(monkeypatch, tmp_path):
+    """load_config_file_server() returns None for legacy host/port keys."""
     monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
     from src.config import load_config_file_server, save_config
     save_config({"host": "10.0.0.1", "port": 8080})
     assert load_config_file_server() is None
 
 
-def test_config_get_server_defaults(monkeypatch, tmp_path):
-    """load_config_file_server() returns None when no config exists - CLI handles default."""
-    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
-    from src.config import load_config_file_server
-    assert load_config_file_server() is None
-
-
-def test_config_get_server_uses_new_key(monkeypatch, tmp_path):
+def test_config_load_file_server_uses_new_key(monkeypatch, tmp_path):
     monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
     from src.config import save_config, load_config_file_server
     save_config({"server": "http://192.168.1.1:9999"})
@@ -400,13 +400,6 @@ def test_auth_set_server_accepts_https(monkeypatch, tmp_path):
     assert "Stored Logseq server: https://example.com" in result.stdout
 
 
-def test_config_get_server_defaults_still_returns_none(monkeypatch, tmp_path):
-    """load_config_file_server() returns None when no config exists - CLI provides default."""
-    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
-    from src.config import load_config_file_server
-    assert load_config_file_server() is None
-
-
 def test_config_resolve_server_bare_hostname_env(monkeypatch, tmp_path):
     monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
     monkeypatch.setenv("LOGSEQ_SERVER", "10.0.0.1")
@@ -421,6 +414,44 @@ def test_config_resolve_server_uses_default_when_nothing_configured(monkeypatch,
     from src.config import resolve_server
     url = resolve_server(default="http://my-default:9999")
     assert url == "http://my-default:9999"
+
+
+def test_config_resolve_server_config_fallback(monkeypatch, tmp_path):
+    """When no env var, falls back to config file value."""
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.delenv("LOGSEQ_SERVER", raising=False)
+    from src.config import save_config, resolve_server
+    save_config({"server": "http://192.168.1.1:9999/api"})
+    url = resolve_server(default="http://fallback:12315")
+    assert url == "http://192.168.1.1:9999/api"
+
+
+def test_config_resolve_server_empty_env_uses_config(monkeypatch, tmp_path):
+    """Empty LOGSEQ_SERVER env falls back to config."""
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setenv("LOGSEQ_SERVER", "")
+    from src.config import save_config, resolve_server
+    save_config({"server": "http://127.0.0.1:12315/api"})
+    url = resolve_server(default="http://fallback:12315")
+    assert url == "http://127.0.0.1:12315/api"
+
+
+def test_config_resolve_server_env_trims_whitespace(monkeypatch, tmp_path):
+    """LOGSEQ_SERVER whitespace is trimmed before normalization."""
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setenv("LOGSEQ_SERVER", "  10.0.0.1  ")
+    from src.config import resolve_server
+    url = resolve_server(default="http://fallback:12315")
+    assert url == "http://10.0.0.1:12315/api"
+
+
+def test_config_resolve_server_default_not_normalized(monkeypatch, tmp_path):
+    """Default value is returned as-is without normalization."""
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.delenv("LOGSEQ_SERVER", raising=False)
+    from src.config import resolve_server
+    url = resolve_server(default="10.0.0.1:9999")
+    assert url == "10.0.0.1:9999"
 
 
 def test_auth_set_server_shows_graph_info_warning_when_unavailable(monkeypatch, tmp_path):
