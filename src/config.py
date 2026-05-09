@@ -141,6 +141,14 @@ def get_token() -> str | None:
     return token if isinstance(token, str) and token else None
 
 
+def resolve_token() -> str | None:
+    """Resolve the current token. Priority: LOGSEQ_TOKEN env var > config file."""
+    token = os.environ.get("LOGSEQ_TOKEN")
+    if token:
+        return token
+    return get_token()
+
+
 def set_server(server: str) -> str:
     _validate_server(server)
     normalized = _normalize_server_url(server)

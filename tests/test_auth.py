@@ -280,9 +280,8 @@ def test_auth_set_server_saves_immediately_when_connected(monkeypatch, tmp_path)
     from unittest.mock import patch
 
     with patch("src.cli.auth._check_connectivity", return_value=True):
-        with patch("src.cli.auth.get_token", return_value="test-token"):
-            with patch("src.cli.auth._get_current_graph", return_value={"name": "Test Graph", "path": "/tmp/test"}):
-                result = runner().invoke(app, ["auth", "set-server", "http://127.0.0.1:12315"], input="y\n")
+        with patch("src.cli.auth._get_current_graph", return_value={"name": "Test Graph", "path": "/tmp/test"}):
+            result = runner().invoke(app, ["auth", "set-server", "http://127.0.0.1:12315"], input="y\n")
 
     assert result.exit_code == 0
     assert "Stored Logseq server: http://127.0.0.1:12315/api" in result.stdout
@@ -416,6 +415,74 @@ def test_config_resolve_server_uses_default_when_nothing_configured(monkeypatch,
     assert url == "http://my-default:9999"
 
 
+def test_config_resolve_token_env_overrides_config(monkeypatch, tmp_path):
+    """LOGSEQ_TOKEN env var overrides config file token."""
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setenv("LOGSEQ_TOKEN", "env-token")
+    from src.config import set_token, resolve_token
+    set_token("config-token")
+    assert resolve_token() == "env-token"
+
+
+def test_config_resolve_token_config_fallback(monkeypatch, tmp_path):
+    """When no env var, falls back to config file token."""
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.delenv("LOGSEQ_TOKEN", raising=False)
+    from src.config import set_token, resolve_token
+    set_token("config-token")
+    assert resolve_token() == "config-token"
+
+
+def test_config_resolve_token_none(monkeypatch, tmp_path):
+    """Returns None when neither env nor config has token."""
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.delenv("LOGSEQ_TOKEN", raising=False)
+    from src.config import resolve_token
+    assert resolve_token() is None
+
+
+def test_auth_set_server_no_token_warns_configure(monkeypatch, tmp_path):
+    """When no token, warns user to configure one."""
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.delenv("LOGSEQ_TOKEN", raising=False)
+    from src.cli.main import app
+    from unittest.mock import patch
+    with patch("src.cli.auth._check_connectivity", return_value=True):
+        result = runner().invoke(app, ["auth", "set-server", "http://127.0.0.1:12315"])
+    assert result.exit_code == 0
+    assert "No token configured" in result.output
+    assert "logseq auth set-token" in result.output
+
+
+def test_auth_set_server_auth_failed_warns_reconfigure(monkeypatch, tmp_path):
+    """When token auth fails, warns user to reconfigure."""
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setenv("LOGSEQ_TOKEN", "invalid-token")
+    from src.cli.main import app
+    from src.cli.auth import TokenAuthError
+    from unittest.mock import patch
+    with patch("src.cli.auth._check_connectivity", return_value=True):
+        with patch("src.cli.auth._get_current_graph", side_effect=TokenAuthError("auth failed")):
+            result = runner().invoke(app, ["auth", "set-server", "http://127.0.0.1:12315"])
+    assert result.exit_code == 0
+    assert "Token authentication failed" in result.output
+    assert "reconfigure" in result.output
+
+
+def test_auth_set_server_api_error_shows_generic(monkeypatch, tmp_path):
+    """When API error occurs, shows generic warning."""
+    monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setenv("LOGSEQ_TOKEN", "test-token")
+    from src.cli.main import app
+    from src.cli.auth import GraphInfoError
+    from unittest.mock import patch
+    with patch("src.cli.auth._check_connectivity", return_value=True):
+        with patch("src.cli.auth._get_current_graph", side_effect=GraphInfoError("api error")):
+            result = runner().invoke(app, ["auth", "set-server", "http://127.0.0.1:12315"])
+    assert result.exit_code == 0
+    assert "Could not retrieve current graph info" in result.output
+
+
 def test_config_resolve_server_config_fallback(monkeypatch, tmp_path):
     """When no env var, falls back to config file value."""
     monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
@@ -459,17 +526,17 @@ def test_auth_set_server_shows_graph_info_warning_when_unavailable(monkeypatch, 
     monkeypatch.setenv("LOGSEQ_CLI_CONFIG_DIR", str(tmp_path))
     monkeypatch.setenv("LOGSEQ_TOKEN", "test-token")
     from src.cli.main import app
+    from src.cli.auth import GraphInfoError
     from unittest.mock import patch
 
     with patch("src.cli.auth._check_connectivity", return_value=True):
-        with patch("src.cli.auth.get_token", return_value="test-token"):
-            with patch("src.cli.auth._get_current_graph", return_value=None):
-                result = runner().invoke(app, ["auth", "set-server", "http://127.0.0.1:12315"])
+        with patch("src.cli.auth._get_current_graph", side_effect=GraphInfoError("api error")):
+            result = runner().invoke(app, ["auth", "set-server", "http://127.0.0.1:12315"])
 
     assert result.exit_code == 0
     assert "Stored Logseq server: http://127.0.0.1:12315" in result.stdout
     assert "Connection: OK" in result.stdout
-    assert "Could not retrieve current graph info" in result.stdout
+    assert "Could not retrieve current graph info" in result.output
 
 
 # ---- trim tests ----

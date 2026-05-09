@@ -5,10 +5,18 @@ from typing import Annotated, Optional
 import httpx
 import typer
 
-from src.config import get_config_path, get_token, set_token, load_config_file_server, set_server, \
+from src.config import get_config_path, get_token, set_token, load_config_file_server, set_server, resolve_token, \
     _validate_server as _validate_server_url, _normalize_server_url, DEFAULT_SERVER
 
 app = typer.Typer(no_args_is_help=True, help="Manage Logseq API connection settings.")
+
+
+class TokenAuthError(Exception):
+    """Token authentication failed (401/403)."""
+
+
+class GraphInfoError(Exception):
+    """Graph info could not be retrieved."""
 
 
 def _validate_server(value: str) -> str:
@@ -34,32 +42,38 @@ def _mask_token(token: str | None) -> str:
 def _check_connectivity(url: str) -> bool:
     """Check connectivity to Logseq server. Returns True if reachable."""
     try:
-        with httpx.Client(base_url=url, timeout=3) as client:
-            response = client.get("/")
+        with httpx.Client(timeout=3) as client:
+            response = client.get(url)
             return response.status_code in (200, 400, 401, 403, 405)
     except (httpx.ConnectError, httpx.ReadTimeout):
         return False
 
 
-def _get_current_graph(base_url: str, token: str) -> dict | None:
-    """Call logseq.App.getCurrentGraph and return graph info or None on failure."""
+def _get_current_graph(base_url: str, token: str) -> dict:
+    """Call logseq.App.getCurrentGraph and return graph info.
+    Raises TokenAuthError on 401/403, GraphInfoError on other failures.
+    """
     try:
-        with httpx.Client(base_url=base_url, timeout=5) as client:
+        with httpx.Client(timeout=5) as client:
             resp = client.post(
-                "/",
+                base_url,
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {token}",
                 },
                 json={"method": "logseq.App.getCurrentGraph", "args": []},
             )
+            if resp.status_code in (401, 403):
+                raise TokenAuthError("Token authentication failed.")
             resp.raise_for_status()
             data = resp.json()
             if isinstance(data, dict) and "name" in data:
                 return data
-    except (httpx.RequestError, httpx.HTTPStatusError, ValueError):
-        pass
-    return None
+            raise GraphInfoError("Invalid response from Logseq API.")
+    except (TokenAuthError, GraphInfoError):
+        raise
+    except (httpx.RequestError, httpx.HTTPStatusError, ValueError) as e:
+        raise GraphInfoError(f"Could not retrieve graph info: {e}")
 
 
 @app.command("set-token")
@@ -108,19 +122,28 @@ def auth_set_server(
     typer.echo("Connection: OK")
 
     # Get current graph info
-    token = get_token()
-    graph = _get_current_graph(normalized_url, token) if token else None
+    token = resolve_token()
 
-    if graph:
-        typer.echo("")
-        typer.echo(f"Current Graph:")
-        typer.echo(f"  Name: {graph.get('name', 'N/A')}")
-        typer.echo(f"  Path: {graph.get('path', 'N/A')}")
-        typer.echo("")
-        if not typer.confirm("Is this the correct graph?", default=True):
-            typer.echo("Server address saved, but you may want to check your Logseq configuration.")
-    else:
-        typer.echo("Warning: Could not retrieve current graph info (missing token or API error)")
+    if not token:
+        typer.echo("Warning: No token configured. Run `logseq auth set-token` to store a token.", err=True)
+        return
+
+    try:
+        graph = _get_current_graph(normalized_url, token)
+    except TokenAuthError:
+        typer.echo("Warning: Token authentication failed. Run `logseq auth set-token` to reconfigure.", err=True)
+        return
+    except GraphInfoError:
+        typer.echo("Warning: Could not retrieve current graph info (API error).", err=True)
+        return
+
+    typer.echo("")
+    typer.echo(f"Current Graph:")
+    typer.echo(f"  Name: {graph.get('name', 'N/A')}")
+    typer.echo(f"  Path: {graph.get('path', 'N/A')}")
+    typer.echo("")
+    if not typer.confirm("Is this the correct graph?", default=True):
+        typer.echo("Server address saved, but you may want to check your Logseq configuration.")
 
 
 @app.command("status")

@@ -171,8 +171,8 @@ def test_get_current_graph_returns_graph_info(monkeypatch, tmp_path):
     assert "test-graph" in result["path"]
 
 
-def test_get_current_graph_returns_none_on_error(monkeypatch, tmp_path):
-    """When Logseq API errors, _get_current_graph should return None."""
+def test_get_current_graph_raises_on_error(monkeypatch, tmp_path):
+    """When Logseq API errors, _get_current_graph should raise GraphInfoError."""
     import httpx
     from src.cli.auth import _get_current_graph
 
@@ -187,7 +187,8 @@ def test_get_current_graph_returns_none_on_error(monkeypatch, tmp_path):
             raise httpx.RequestError("Connection refused")
 
     import unittest.mock
+    from src.cli.auth import GraphInfoError
     with unittest.mock.patch("httpx.Client", FakeClient):
-        result = _get_current_graph("http://127.0.0.1:12315", "fake-token")
-
-    assert result is None
+        import pytest
+        with pytest.raises(GraphInfoError, match="Could not retrieve graph info"):
+            _get_current_graph("http://127.0.0.1:12315", "fake-token")
